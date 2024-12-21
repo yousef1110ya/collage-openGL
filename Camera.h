@@ -9,6 +9,7 @@
 //Note: All angles in degrees  //
 /////////////////////////////////
 
+
 struct Vector3dStruct  
 {
 	GLfloat x,y,z;
@@ -46,7 +47,6 @@ public:
 
 	void basicCamera();
 	void setXY(int x , int y );
-
 };
 
 

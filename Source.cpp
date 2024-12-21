@@ -9,12 +9,14 @@
 #include "globals.h"
 #include "chair.h"
 #include "office.h"
+#include "LightBulb.h"
 //#include "Wall.h"
 #include "Model_3DS.h"
 Model_3DS lavander;
 Model_3DS stool_1;
 testing t;
 office manager;
+LightBulb light0(22.0f,6.0f,11.0f);
 //Wall testingWall;
 /*
  *
@@ -37,6 +39,8 @@ chair test;
 int wood;
 int officeWall;
 int glass;
+int brick;
+int Lwood;
 HDC hDC = NULL;		 // Private GDI Device Context
 HGLRC hRC = NULL;	 // Permanent Rendering Cntext
 HWND hWnd = NULL;	 // Holds Our Window Handle
@@ -44,18 +48,7 @@ HINSTANCE hInstance; // Holds The Instance Of The Application
 /*
  *	IN THIS SECTION WE WILL ADD THE LIGHTING VARIABLES TO BE USED IN THE CODE 
 */
-GLfloat Light0Pos[] = {4,6, 4, 0};
-GLfloat temp1 [] = {1, 1, 0, 1.0 };
-GLfloat temp2[] = {40, 40,40, 1.0 };
-GLfloat temp3[] = {30, 30, 30, 1.0 };
-GLfloat LightPos[] = {0.0f,1.0f,1.0f,1.0f};
-GLfloat LightAmb[] = {1.0f,1.0f,1.0f,1.0f};
-GLfloat LightDiff[] = {0.6f,0.6f,0.6f,1.0f};
-GLfloat LightSpec[] = {0.2f,0.2f,0.2f,1.0f};
-GLfloat MatAmb[] = {1.0f,1.0f,1.0f,1.0f};
-GLfloat MatDif[] = {0.6f,0.6f,0.6f,1.0f};
-GLfloat MatSpec[] = {0.2f,0.2f,0.2f,1.0f};
-GLfloat MatShn[] = {128.0f};
+
 
 //bool keys[256];			 // Array Used For The Keyboard Routine
 bool active = TRUE;		 // Window Active Flag Set To TRUE By Default
@@ -115,7 +108,7 @@ GLvoid ReSizeGLScene(GLsizei width, GLsizei height) // Resize And Initialize The
 int InitGL(GLvoid) // All Setup For OpenGL Goes Here
 {
 	glShadeModel(GL_SMOOTH);						   // Enable Smooth Shading
-	glClearColor(0.0f, 0.0f, 0.0f, 0.5f);			   // Black Background
+	glClearColor(0.0f, 0, 0.0f, 1.0f); // Clear the background of our window to white
 	glClearDepth(1.0f);								   // Depth Buffer Setup
 	glEnable(GL_DEPTH_TEST);						   // Enables Depth Testing
 	glDepthFunc(GL_LEQUAL);							   // The Type Of Depth Testing To Do
@@ -124,14 +117,11 @@ int InitGL(GLvoid) // All Setup For OpenGL Goes Here
 	
 	
 
-glEnable(GL_LIGHTING);
-glEnable(GL_LIGHT0);
-glLightfv (GL_LIGHT0, GL_AMBIENT, temp1);
-glLightfv(GL_LIGHT0 , GL_POSITION , Light0Pos);
-
 	wood = LoadTexture("wood.bmp", 0);
+	Lwood = LoadTexture("LWood.bmp" , 0);
 	officeWall = LoadTexture("cartBoard.bmp" , 0);
 	glass= LoadTexture("Glass.bmp" , 255);
+	brick = LoadTexture("brick.bmp" , 255);
 	initializeKeys();
 	/*
 	lavander.Load("Lav.3DS");
@@ -143,6 +133,8 @@ glLightfv(GL_LIGHT0 , GL_POSITION , Light0Pos);
 	lavander.Materials[0].tex.LoadBMP((char*)"lavender_trunk.bmp");  // the trunk of the lavander
 	*/
 
+	glEnable(GL_LIGHTING);
+
 	return TRUE; // Initialization Went OK
 }
 
@@ -150,12 +142,150 @@ int DrawGLScene(GLvoid) // Here's Where We Do All The Drawing
 {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glLoadIdentity();
-	glTranslated(0, 0, -8);
+
 	
 	main.basicCamera();
-	create2sidesWall(7 , 5 , 0.1 , wood , wood , wood );
-	manager.createChair(1,0.1,1,1,2,1,officeWall,officeWall);
+
+		manager.createChair(1,0.1,1,1,2,1,officeWall,officeWall);
 	manager.createDesk(0.5,0.1,2,4,1.5,1,wood , glass);
+	/*
+		testing with the lights 
+	*/
+	light0.changeLightPositionToBulb();
+
+	light0.resetLights();
+
+	/*
+	* CREATING THE MAIN FRAME OF THE RESTURANT 
+	*/
+	// the front side of the resturant
+	glPushMatrix();
+	create2sidesWall( 9, 7  , 0.3,brick,brick,brick);
+	glPopMatrix();
+	// PS: i will add the door and the brick continou after i will create the door class
+	// the left wall
+	glPushMatrix();
+	create2sidesWall(0.2 , 7  , 13,brick,brick,brick);
+	glPopMatrix();
+	// the office inner wall
+	glBlendFunc(GL_SRC_ALPHA ,GL_ONE_MINUS_SRC_ALPHA);
+	glEnable(GL_BLEND);
+	glPushMatrix();
+	glTranslated(7,0,0.01);
+	glColor4f(1.0,1.0,1.0,0.7);
+	create2sidesWall(0.1 , 4  , 3,glass,glass,glass);	// the glass panel of the office
+	glPopMatrix();
+	glDisable(GL_BLEND);
+	glPushMatrix();
+	glTranslated(7,4,0.01);
+	create2sidesWall(0.1 , 3  , 5,officeWall,officeWall,officeWall);	// the panel on the top of the glass and the door
+	glPopMatrix();
+	
+	glPushMatrix();
+	glTranslated(0,0,5);
+	create2sidesWall(7 , 7  ,0.1,brick,brick,brick); // the wall between the office and the toilets
+	glPopMatrix();
+	//
+	//	CREATING THE RESTROOMS
+	//
+	// the wall between the office and the rest rooms
+	glPushMatrix();
+	glTranslated(7,0,13);
+	//create2sidesWall(2 , 4  ,0.1,wood,wood,wood); // the first side 
+	glTranslated(2,0,0);
+	create2sidesWall(0.1 , 4  ,-6,wood,wood,wood);	// the long side
+	glPopMatrix();
+	
+	glPushMatrix();
+	glTranslated(0,0,9);
+
+	create2sidesWall(7 , 7  ,0.1,glass,glass,glass); // the wall between the rest rooms
+	glPopMatrix();
+	
+	glPushMatrix();
+	glTranslated(7,4,5);
+	create2sidesWall(0.1 , 3  , 8,officeWall,officeWall,officeWall);	// the panel on the top of the glass and the door
+	glPopMatrix();
+	glPushMatrix();
+	glTranslated(7,0,5);
+	create2sidesWall(0.1 , 4  , 2,officeWall,officeWall,officeWall);	// the wall next to the door 1
+	glPopMatrix();
+	glPushMatrix();
+	glTranslated(7,0,9);
+	create2sidesWall(0.1 , 4  , 2,officeWall,officeWall,officeWall);	// the wall next to the door 2
+	glPopMatrix();
+	// PS: the Doors needs to be added 
+	//
+	//	THE BACK WITH THE KITCHEN
+	//
+	glPushMatrix();
+	glTranslated(0,0,13);
+	create2sidesWall(10 , 7 , 0.2,brick,brick,brick);	
+	glTranslated(10,0,0);
+	create2sidesWall(0.1 , 7 , 4,brick,brick,brick);	
+	glTranslated(0,0,4);
+	create2sidesWall(15 , 7 , 0.1,brick,brick,brick);	
+	glPopMatrix();
+	//
+	// CREATING THE PANEL ON TOP OF THE GLASS PANEL
+	//
+	glPushMatrix();
+	glTranslated(9,5,0);
+	create2sidesWall(16 , 2  , 0.2,brick,brick,brick);	
+	glPopMatrix();
+	//
+	//	CREATE THE FINAL WALL
+	//
+	glPushMatrix();
+	glTranslated(25,0,0);
+	create2sidesWall(0.1 , 7  , 17,brick,brick,brick);	
+	glPopMatrix();
+	//
+	//	CREATING THE INNER DECORE
+	//
+
+	// CREATING THE WALL BEHIND THE BAR
+	glPushMatrix();
+	glTranslated(13,0,13);
+	create2sidesWall(12 , 7 , 0.5,brick,brick,brick);	
+	glPopMatrix();
+
+	// CREATING THE MAIN BAR AND THE CHAIRS
+	glPushMatrix();
+	glTranslated(25,0,11);
+	create2sidesWall(-10 , 1.5  , -0.5,wood,wood,wood);	 // the Bar stand for the main bar
+	glTranslated(0,1.5,0);
+	create2sidesWall(-10 , 0.5  , -1,Lwood,Lwood,Lwood);
+	glPopMatrix();
+
+
+	// the side bar and the window bar
+	glPushMatrix();
+	glTranslated(25,1.5,10);
+	create2sidesWall(-1 , 0.5  , -10,Lwood,Lwood,Lwood); // the side bar	 
+	glPopMatrix();
+
+	glPushMatrix();
+	glTranslated(25,0,0);
+	glColor4f(1.0,1.0,1.0,1.0);
+	create2sidesWall(-10 , 1.5  , 0.2,wood,wood,wood);	
+	glTranslated(0,1.5,0);
+	create2sidesWall(-10 , 0.5  , 1,Lwood,Lwood,Lwood);	 
+	glPopMatrix();
+	// TESTING THE BLENDING FUNCTIONS 
+	glBlendFunc(GL_SRC_ALPHA ,GL_ONE_MINUS_SRC_ALPHA);
+	glEnable(GL_BLEND);
+	glPushMatrix();
+	glTranslated(13,0,-0.005);
+	glColor4f(1.0,1.0,1.0,0.4);
+	create2sidesWall(12 , 5  , 0.01,glass,glass,glass);	
+	glPopMatrix();
+	glDisable(GL_BLEND);
+	/*
+	* FINISHED THE MAIN FRAME OF THE RESTURANT
+	*/
+
+	
 	//testingWall.createWall(0, 0, 0 , 7, 8, 1, wood);
 	//t.createTestRec
 	//stool_1.Draw();
